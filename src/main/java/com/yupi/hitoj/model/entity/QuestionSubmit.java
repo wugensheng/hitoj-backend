@@ -16,7 +16,7 @@ public class QuestionSubmit implements Serializable {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID) // 非连续自增
     private Long id;
 
     /**

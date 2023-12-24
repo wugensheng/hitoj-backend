@@ -1,5 +1,6 @@
 package com.yupi.hitoj.controller;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.yupi.hitoj.annotation.AuthCheck;
@@ -14,6 +15,7 @@ import com.yupi.hitoj.model.dto.question.QuestionAddRequest;
 import com.yupi.hitoj.model.dto.question.QuestionEditRequest;
 import com.yupi.hitoj.model.dto.question.QuestionQueryRequest;
 import com.yupi.hitoj.model.dto.question.QuestionUpdateRequest;
+import com.yupi.hitoj.model.dto.user.UserQueryRequest;
 import com.yupi.hitoj.model.entity.Question;
 import com.yupi.hitoj.model.entity.User;
 import com.yupi.hitoj.model.vo.QuestionVO;
@@ -68,6 +70,8 @@ public class QuestionController {
         }
         questionService.validQuestion(question, true);
         User loginUser = userService.getLoginUser(request);
+        question.setJudgeConfig(JSONUtil.toJsonStr(questionAddRequest.getJudgeConfig()));
+        question.setJudgeCase(JSONUtil.toJsonStr(questionAddRequest.getJudgeCase()));
         question.setUserId(loginUser.getId());
         question.setFavourNum(0);
         question.setThumbNum(0);
@@ -120,6 +124,8 @@ public class QuestionController {
         if (tags != null) {
             question.setTags(GSON.toJson(tags));
         }
+        question.setJudgeConfig(JSONUtil.toJsonStr(questionUpdateRequest.getJudgeConfig()));
+        question.setJudgeCase(JSONUtil.toJsonStr(questionUpdateRequest.getJudgeCase()));
         // 参数校验
         questionService.validQuestion(question, false);
         long id = questionUpdateRequest.getId();
@@ -191,7 +197,24 @@ public class QuestionController {
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
 
-    // endregion
+
+    /**
+     * 分页获取题目列表（仅管理员）
+     *
+     * @param questionQueryRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/list/page")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
+                                                   HttpServletRequest request) {
+        long current = questionQueryRequest.getCurrent();
+        long size = questionQueryRequest.getPageSize();
+        Page<Question> questionPage = questionService.page(new Page<>(current, size),
+                questionService.getQueryWrapper(questionQueryRequest));
+        return ResultUtils.success(questionPage);
+    }
 
 
     /**
@@ -212,6 +235,8 @@ public class QuestionController {
         if (tags != null) {
             question.setTags(GSON.toJson(tags));
         }
+        question.setJudgeConfig(JSONUtil.toJsonStr(questionEditRequest.getJudgeConfig()));
+        question.setJudgeCase(JSONUtil.toJsonStr(questionEditRequest.getJudgeCase()));
         // 参数校验
         questionService.validQuestion(question, false);
         User loginUser = userService.getLoginUser(request);
